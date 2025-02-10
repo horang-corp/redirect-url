@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>호랑에듀 - 코드 첨삭 AI코딩튜터 개발 버전 테스트</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+    #chat-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    /* API URL와 프롬프트 입력 필드 스타일 */
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    textarea {
+      height: 100px;
+      resize: vertical;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #response {
+      margin-top: 20px;
+      border: 1px solid #ccc;
+      background: #fafafa;
+      padding: 15px;
+      border-radius: 4px;
+      min-height: 50px;
+      white-space: pre-wrap;
+    }
+    /* 코드 표시 스타일 */
+    code {
+      background-color: #eee;
+      padding: 2px 4px;
+      border-radius: 4px;
+      font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+    }
+    pre {
+      background-color: #eee;
+      padding: 10px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="chat-container">
+    <h1>호랑에듀 - 코드 첨삭 AI코딩튜터 개발 버전 테스트</h1>
+    <!-- API URL 입력 필드 -->
+    <input type="text" id="api-url" placeholder="API URL" value="http://127.0.0.1:4000/ask">
+    <textarea id="prompt" placeholder="여기에 프롬프트를 입력하세요..."></textarea>
+    <button id="submit-btn">전송</button>
+    <div id="response"></div>
+  </div>
+
+  <script>
+    // "ØØØ" 로 감싸진 단어를 연한 파란색, 볼드체, 밑줄 스타일로 강조하는 함수
+    function highlightText(text) {
+      // 정규표현식 설명:
+      // ØØØ      : 세 개의 Ø 문자
+      // ([^Ø]+)  : Ø 문자가 아닌 문자들을 1회 이상 캡처 (강조할 단어)
+      // ØØØ      : 다시 세 개의 Ø 문자
+      return text.replace(/ØØØ([^Ø]+)ØØØ/g, function(match, p1) {
+        return `<span style="color: lightblue; font-weight: bold; text-decoration: underline;">${p1}</span>`;
+      });
+    }
+
+    document.getElementById('submit-btn').addEventListener('click', function() {
+      const promptText = document.getElementById('prompt').value.trim();
+      if (!promptText) {
+        alert("프롬프트를 입력해주세요.");
+        return;
+      }
+      
+      const apiUrl = document.getElementById('api-url').value.trim();
+      if (!apiUrl) {
+        alert("API URL을 입력해주세요.");
+        return;
+      }
+      
+      const responseDiv = document.getElementById('response');
+      responseDiv.innerHTML = "<p>응답을 기다리는 중...</p>";
+
+      // 요청 데이터는 'question' 키를 사용합니다.
+      const requestData = { question: promptText };
+
+      fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+          // 필요 시 추가 헤더 설정
+        },
+        body: JSON.stringify(requestData)
+      })
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('네트워크 오류: ' + response.status);
+        }
+        return response.json();
+      })
+      .then(data => {
+        // 수정된 응답 형식: data.response.content 내에 값들이 존재
+        if (
+          data.response &&
+          data.response.content &&
+          data.response.content.message &&
+          data.response.content.original &&
+          data.response.content.modify
+        ) {
+          const { message, original, modify } = data.response.content;
+          // original과 modify 내 "ØØØ" 로 감싸진 단어 스타일링 처리
+          const highlightedOriginal = highlightText(original);
+          const highlightedModify   = highlightText(modify);
+
+          responseDiv.innerHTML = `
+            <p><strong>메시지:</strong><br>${message.replace(/\n/g, "<br>")}</p>
+            <p><strong>원본 코드:</strong> <code>${highlightedOriginal}</code></p>
+            <p><strong>수정된 코드:</strong> <code>${highlightedModify}</code></p>
+          `;
+        } else {
+          // 예상치 못한 응답 형식일 경우 전체 응답 데이터를 출력
+          responseDiv.innerHTML = `
+            <p>예상치 못한 응답을 받았습니다.</p>
+            <pre>${JSON.stringify(data, null, 2)}</pre>
+          `;
+        }
+      })
+      .catch(error => {
+        responseDiv.innerHTML = "<p>오류 발생: " + error.message + "</p>";
+      });
+    });
+  </script>
+</body>
+</html>
