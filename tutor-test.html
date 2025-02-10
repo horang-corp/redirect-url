@@ -131,6 +131,8 @@
             <p><strong>메시지:</strong><br>${message.replace(/\n/g, "<br>")}</p>
             <p><strong>원본 코드:</strong> <code>${highlightedOriginal}</code></p>
             <p><strong>수정된 코드:</strong> <code>${highlightedModify}</code></p>
+            <br></br>
+            <p><strong>원본 응답 메세지:</strong> <br>${JSON.stringify(data, null, 2)}</br></p>
           `;
         } else {
           // 예상치 못한 응답 형식일 경우 전체 응답 데이터를 출력
